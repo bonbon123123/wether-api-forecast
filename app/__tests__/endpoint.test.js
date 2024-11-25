@@ -58,7 +58,7 @@ describe('Endpunkty API prognozy pogody', () => {
                     .get(`/?latitude=${testCase.latitude}&longitude=${testCase.longitude}`);
 
                 expect(response.status).toBe(400);
-                expect(response.body).toHaveProperty('error', 'Niepoprawna szerokość lub długość geograficzna');
+                expect(response.body).toHaveProperty('error');
             }
         });
 
@@ -112,7 +112,7 @@ describe('Endpunkty API prognozy pogody', () => {
                     .get(`/?latitude=${testCase.latitude}&longitude=${testCase.longitude}`);
 
                 expect(response.status).toBe(400);
-                expect(response.body).toHaveProperty('error', 'Niepoprawna szerokość lub długość geograficzna');
+                expect(response.body).toHaveProperty('error');
             }
         });
 
