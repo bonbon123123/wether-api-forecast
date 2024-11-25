@@ -7,6 +7,20 @@ const range = (start: number, stop: number, step: number) =>
 const power_of_instalation = 2.5;
 const efficiency = 0.2;
 
+interface HourlyWeather {
+    time: string;
+    temperature: number;
+    weatherCode: number;
+}
+
+interface DayPrepared {
+    date: string;
+    code: number;
+    minTemp: number;
+    maxTemp: number;
+    generatedEnergy: number;
+}
+
 export async function GET(req: Request) {
     try {
         const urlParams = new URL(req.url).searchParams;
@@ -85,9 +99,9 @@ export async function GET(req: Request) {
                     weatherCode: weatherData.hourly.weatherCode[index]
                 }));
 
-                const days: any[][] = [];
+                const days: HourlyWeather[][] = [];
                 for (let i = 0; i < 7; i++) {
-                    const day: any[] = [];
+                    const day: HourlyWeather[] = [];
                     for (let j = 0; j < 24; j++) {
                         const recordIndex = i * 24 + j;
                         if (recordIndex < formattedData.length) {
@@ -97,7 +111,7 @@ export async function GET(req: Request) {
                     days.push(day);
                 }
 
-                const days_prepared: any[] = [];
+                const days_prepared: DayPrepared[] = [];
                 days.forEach((day, index) => {
                     const date = new Date(day[0].time).toISOString().split('T')[0];
                     const code = day[0].weatherCode;

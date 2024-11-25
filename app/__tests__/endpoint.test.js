@@ -14,7 +14,8 @@ const createTestServer = (handler) => {
             res.statusCode = status;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(data));
-        } catch (error) {
+        } catch (_error) {
+ 
             res.statusCode = 500;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ error: 'Błąd wewnętrzny serwera' }));
