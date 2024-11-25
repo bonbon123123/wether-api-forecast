@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false, // Wyłącza React Strict Mode
+
   webpack: (config) => {
     config.resolve = {
       ...config.resolve,

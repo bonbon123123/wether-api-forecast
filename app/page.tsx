@@ -1,16 +1,16 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
-import { LatLng, LatLngExpression, Icon } from 'leaflet';
-import markerIcon from './public/marker.png';
+import React, { useState, useEffect, useMemo } from "react";
+import { LatLng } from "leaflet";
 import weatherCodes from './public/codes.json' assert { type: 'json' };
 
-
-type WeatherCodes = Record<string, {
-  day: { description: string; image: string };
-  night: { description: string; image: string };
-}>;
-
+import dynamic from 'next/dynamic';
+type WeatherCodes = Record<
+  string,
+  {
+    day: { description: string; image: string };
+    night: { description: string; image: string };
+  }
+>;
 
 
 
@@ -38,42 +38,33 @@ interface MarkerData {
   position: LatLng;
 }
 
-const customIcon = new Icon({
-  iconUrl: markerIcon.src,
-  iconSize: [40, 40],
-});
-
-function MapEvents({ onMapClick }: { onMapClick: (latlng: LatLng) => void }) {
-  const map = useMapEvents({
-    click(e) {
-      onMapClick(e.latlng);
-      map.flyTo(e.latlng, map.getZoom());
-    }
-  });
-
-  return null;
-}
 export default function Home() {
   const [endpoint1, setEndpoint1] = useState<Endpoint1Data[] | undefined>();
   const [endpoint2, setEndpoint2] = useState<Endpoint2Data | undefined>();
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const [mode, setMode] = useState<"light" | "dark">("light");
   const [isLoading, setIsLoading] = useState(false);
   const [markers, setMarkers] = useState<MarkerData[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   const codes: WeatherCodes = weatherCodes;
 
   const toggleMode = () => {
-    const newMode = mode === 'light' ? 'dark' : 'light';
+    const newMode = mode === "light" ? "dark" : "light";
     setMode(newMode);
-    document.documentElement.setAttribute('data-theme', newMode);
+    document.documentElement.setAttribute("data-theme", newMode);
   };
 
   useEffect(() => {
-    // Domyślny tryb w zależności od preferencji systemu
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setMode(prefersDark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setMode(prefersDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+    }
+  }, [isClient]);
 
   const fetchEndpoint1 = async (lat: number, lng: number) => {
     setIsLoading(true);
@@ -108,17 +99,27 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
   const handleMapClick = (latlng: LatLng) => {
-    setMarkers([{
-      id: Date.now(),
-      position: latlng
-    }]);
+    setMarkers([
+      {
+        id: Date.now(),
+        position: latlng,
+      },
+    ]);
     fetchEndpoint1(latlng.lat, latlng.lng);
     fetchEndpoint2(latlng.lat, latlng.lng);
   };
 
 
-  const defaultCenter: LatLngExpression = [50, 19];
+  const MapComponent = useMemo(
+    () =>
+      dynamic(() => import("./components/MapComponent"), {
+        loading: () => <p>A map is loading</p>,
+        ssr: false,
+      }),
+    []
+  );
 
   return (
     <div
@@ -140,32 +141,15 @@ export default function Home() {
         className="mb-1 rounded-t-lg overflow-hidden"
         style={{
           borderColor: "var(--border)",
-
         }}
       >
-        <MapContainer
-          center={defaultCenter}
-          zoom={13}
-          scrollWheelZoom={false}
-          className="h-full w-full"
-          style={{ height: "50vh", width: "80vh" }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <MapEvents onMapClick={handleMapClick} />
-          {markers.map((marker) => (
-            <Marker key={marker.id} position={marker.position} icon={customIcon}>
-              <Popup>
-                Lat: {marker.position.lat.toFixed(4)}
-                <br />
-                Lng: {marker.position.lng.toFixed(4)}
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+        {isClient && <MapComponent markers={markers} onMapClick={handleMapClick} />}
+
+        {/* {isClient && (
+
+        )} */}
       </div>
+
 
 
       <div className="w-full overflow-x-auto p-6">
@@ -237,5 +221,7 @@ export default function Home() {
         </div>
       )}
     </div>
+
+
   );
 }
